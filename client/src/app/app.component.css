@@ -1,0 +1,79 @@
+td.turn {
+    background-color: antiquewhite;
+}
+
+table {
+    border-color: black;
+    border-style: solid;
+    border-width: 2px; 
+    border-collapse: collapse;
+    text-align: center;
+    /* margin:auto; */
+    margin-bottom: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size:150%;
+}
+
+
+td {
+    border-style: solid;
+    border-color: black;
+    border-width: 2px;
+    width: 50px;
+}
+
+/* tr {
+    height: 50px;
+}
+
+td.hdiv {
+    border-bottom-width: 4px;
+}
+
+td.vdiv {
+    border-right-width: 4px;
+}
+
+td.selected {
+    background-color:lightblue;
+}
+
+td.written {
+    color:rgb(68, 0, 255);
+}
+
+td.wrong {
+    background-color: rgb(255, 136, 136);
+}
+
+button.del {
+    display:block;
+    width: 100%;
+    height: 46px;
+    font-size: 100%;
+    color: white;
+    background-color: rgb(167, 0, 33);
+}
+
+button.newGame, input, label {
+    display: inline-block;
+    margin-top:1em;
+    font-size: 100%;
+}
+
+div.buttons {
+    text-align: center;
+}
+
+
+div.win {
+    position:absolute;
+    top:20%;
+    text-align: center;
+    line-height: 100px;
+    width: 100%;
+    background-color: white;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-size: 300%;
+    color: rgb(1, 134, 94);
+} */

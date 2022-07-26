@@ -1,8 +1,15 @@
-const Joi = require('joi');
 const express = require('express');
 const app = express();
-
 app.use(express.json());
+// app.use(express.static('dist'));
+const cors = require('cors');
+app.use(cors());
+// app.all('*', function (req, res) {
+//     console.log(req.method, req.url);
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
+//     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+//    });
 
 var gameState = {
     numberOfPlayers: 0,
@@ -17,7 +24,8 @@ var gameState = {
     playerTurn: 0,
     playerPickUp: false,
     dealer: 0,
-    inGame: false
+    inGame: false,
+    winner: -1
 };
 
 outOfGameActions = [addPlayer, newGame, removePlayer];
@@ -41,21 +49,25 @@ var tiles = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖�
 //     removePlayer: removePlayer,
 // };
 
-app.get('/api/showStatus/:id', (req, res) => {
+app.get('/api/status/:id', (req, res) => {
     handleApi(req, res, showStatus);
 })
 
 function showStatus(req) {
     const playerNum = getPlayerID(req);
     const status = {
+        playerNum,
         inHand: gameState.inHandTiles[playerNum],
-        laidOut: gameState.laidOutTiles[playerNum],
+        laidOut: gameState.laidOutTiles,
         players: gameState.players,
         lastDropped: gameState.lastDropped,
         unwantedTiles: gameState.unwantedTiles,
         playerTurn: gameState.playerTurn,
         playerPickUp: gameState.playerPickUp,
-        dealer: gameState.dealer
+        dealer: gameState.dealer,
+        inGame: gameState.inGame,
+        winner: gameState.winner,
+        winnerInHand: gameState.winner >= 0 ? gameState.inHandTiles[gameState.winner] : null
     };
     return status;
 }
@@ -100,10 +112,10 @@ function numToTiles(numbers, pictures) {
     return pictures;
 }
 
-app.put('/api/newGame', (req, res) => {
+app.put('/api/newGame/:id', (req, res) => {
     handleApi(req, res, newGame);
 })
-function newGame() {
+function newGame(req) {
     if (gameState.numberOfPlayers < 3) throw 'Not enough players to play a game.';
     var Unshuffled = [];
     for (let i = 0 ; i < 34 ; i++) {
@@ -120,6 +132,8 @@ function newGame() {
     playerTurn = dealer;
     gameState.playerPickUp = false;
     gameState.inGame = true;
+    gameState.winner = -1;
+    return showStatus(req);
 }
 
 function shuffleTiles(Unshuffled) {
@@ -186,6 +200,7 @@ function dropTile(req) {
     gameState.lastDropped = gameState.inHandTiles[playerNum][index];
     gameState.inHandTiles[playerNum].splice(index, 1);
     nextTurn();
+    return showStatus(req);
 }
 
 function findTile(playerNum, tile) {
@@ -210,6 +225,7 @@ function pickUpNewTile (req) {
     });
     gameState.unpickedUp++;
     gameState.playerPickUp = false;
+    return showStatus(req);
 }
 
 function countCard(card, tiles) {
@@ -237,6 +253,7 @@ function peng(req) {
     gameState.laidOutTiles[playerNum].push(tile, tile, tile);
     gameState.playerTurn = playerNum;
     gameState.playerPickUp = false;
+    return showStatus(req);
 }
 
 app.put('/api/gang/:id', (req, res) => {
@@ -265,12 +282,12 @@ function gang(req) {
         gameState.playerTurn = playerNum;
     }
     for (let i = gameState.inHandTiles[playerNum].length - 1 ; i >= 0 ; i--) {
-        if (gameState.inHandTiles[playerNum] == card) {
+        if (gameState.inHandTiles[playerNum][i] == tile) {
             gameState.inHandTiles[playerNum].splice(i, 1);
         }
     }
     gameState.playerPickUp = true;
-    pickUpNewTile();
+    return pickUpNewTile(req);
 }
 
 app.put('/api/chi/:id', (req, res) => {
@@ -305,6 +322,7 @@ function chi(req) {
     gameState.inHandTiles[playerNum].splice(index2, 1);
     gameState.laidOutTiles[playerNum].push(...tiles);
     gameState.playerPickUp = false;
+    return showStatus(req);
 }
 
 function nextTurn() {
@@ -326,7 +344,6 @@ function previousPlayer() {
 
 app.put('/api/win/:id', (req, res) => {
     handleApi(req, res, win);
-    res.send(results);
 })
 
 function win(req) {
@@ -360,17 +377,12 @@ function win(req) {
     if (playerNum != gameState.dealer) {
         gameState.dealer++;
     }
-    let results = {
-        winner: playerNum,
-        inHand: gameState.inHandTiles[playerNum],
-        laidOut: gameState.laidOutTiles[playerNum],
-        standings: gameState.players
-    }
     gameState.inGame = false;
-    return results;
+    gameState.winner = playerNum;
+    return showStatus(req);
 }
 
-app.post('/api/addPlayer/:name', (req, res) => {
+app.post('/api/player/:name', (req, res) => {
     handleApi(req, res, addPlayer);
 })
 function addPlayer(req) {
@@ -383,18 +395,29 @@ function addPlayer(req) {
         money: 50
     }
     gameState.players.push(player);
-    const id = gameState.numberOfPlayers + '';
-    // const id = Math.floor(Math.random() * Math.pow(10, 6));
+    const id = Math.floor(Math.random() * 1000000) + '';
     gameState.playerIDs.push(id);
+    const playerNum = gameState.numberOfPlayers;
     gameState.numberOfPlayers++;
-    return id;
+    return {
+        playerNum,
+        playerID: id,
+        inHand: gameState.inHandTiles[playerNum],
+        laidOut: gameState.laidOutTiles,
+        players: gameState.players,
+        lastDropped: gameState.lastDropped,
+        unwantedTiles: gameState.unwantedTiles,
+        playerTurn: gameState.playerTurn,
+        playerPickUp: gameState.playerPickUp,
+        dealer: gameState.dealer,
+        inGame: gameState.inGame
+    };
 }
 
-app.delete('api/removePlayer/:id', (req, res) => {
+app.delete('api/player/:id', (req, res) => {
     const playerNum = gameState.players.findIndex(p => p.id === req.params.id);
     removePlayer(playerNum);
-    res.send(playerNames)
-    
+    return showStatus(req);
 })
 function removePlayer(playerNum) {
     gameState.numberOfPlayers--;

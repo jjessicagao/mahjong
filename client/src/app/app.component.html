@@ -1,0 +1,84 @@
+
+<div>
+  <div *ngIf = "joined == 0"> 
+    <input name="name" placeholder="name" #name> 
+    <button (click)="addPlayer(name.value)"> Join Game </button>
+  </div>
+  <div *ngIf = "joined == 1 && status.inGame" style="font-size: 3em">
+    <div *ngFor="let tiles of status.laidOut; let i = index">
+      {{i < status.playerNum ? status.players[i].name + numToTiles(tiles) : ''}}
+    </div>
+    <div *ngFor="let tiles of status.laidOut; let i = index">
+      {{i > status.playerNum ? status.players[i].name + numToTiles(tiles) : ''}}
+    </div>
+
+    Unwanted: {{numToTiles(status.unwantedTiles)}} <br>
+    <div>
+      Last dropped: {{status.playerPickUp ? numToTiles([status.lastDropped]) : ''}} 
+    </div>
+    In hand: {{numToTiles(status.inHand)}} <br>
+    Laid out: {{numToTiles(status.laidOut[status.playerNum])}} <br>
+  </div>
+  <div *ngIf = "status.winner >= 0" style="font-size: 3em">
+    Winner: {{status.players[status.winner].name}} <br>
+    Hand: {{numToTiles(status.winnerInHand)}} {{numToTiles(status.laidOut[status.winner])}}
+  </div>
+</div>
+
+
+<div>
+  <table>
+    <tr *ngFor="let player of status.players; let i = index">
+      <td [class.turn] = "status.playerTurn == i">{{player.name}}</td>
+      <td>{{player.money}}</td>
+      <td>{{status.dealer == i ? '✔️' : ''}}</td>
+    </tr>
+  </table>
+  <div *ngIf = "joined == 1">
+    <button *ngIf = "!status.inGame" (click)="newGame()"> New Game </button>
+    <div *ngIf = "status.inGame"> 
+      <input name="index" placeholder="tile index" #index>
+      <input name="index2" placeholder="tile index 2" #index2>
+      <button (click)="dropTile(index.value)"> Drop Tile </button>
+      <button (click)="pickUpNewTile()"> Pick Up Tile </button> 
+      <button (click)="chi(index.value, index2.value)"> Chi </button>
+      <button (click)="peng()"> Peng </button>
+      <button (click)="gang(index.value)"> Gang </button>
+      <button (click)="win()"> Win </button>
+    </div>
+  </div>
+</div>
+
+<!-- <table>
+  <tr *ngFor='let row of current; let i = index'>
+    <td *ngFor='let cell of row; let j = index' 
+    [class.hdiv] = "i % 3 == 2"
+    [class.vdiv] = "j % 3 == 2"
+    [class.selected] = "selectedRow == i && selectedCol == j"
+    [class.written] = "puzzle[i][j] == 0" 
+    [class.wrong] = "wrong[i][j]"
+    (click)="selectCell(i, j)"> 
+      {{cell == 0 ? '' : cell}}
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr *ngFor='let i of [0, 1, 2]'>
+    <td *ngFor='let j of [1, 2, 3]' (click)="pickNumber(i * 3 + j)"> 
+      {{i * 3 + j}}
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3"> <button class="del" (click)="deleteNumber()"> Delete </button> </td>
+  </tr>
+</table>
+
+<div class="buttons">
+  <input type="radio" value="easy" [(ngModel)] = "difficulty" id = "easy" checked> <label for="easy"> Easy </label> <br>
+  <input type="radio" value="med" [(ngModel)] = "difficulty" id = "med"> <label for="med"> Medium </label> <br>
+  <input type="radio" value="hard" [(ngModel)] = "difficulty" id = "hard"> <label for="hard"> Hard </label> <br>
+  <button class="newGame" (click)="askNewGame()"> New Game </button>
+</div>
+
+<div class="win" *ngIf = "won"> YOU WON! </div> -->
