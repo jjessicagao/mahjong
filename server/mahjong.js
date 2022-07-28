@@ -4,12 +4,7 @@ app.use(express.json());
 // app.use(express.static('dist'));
 const cors = require('cors');
 app.use(cors());
-// app.all('*', function (req, res) {
-//     console.log(req.method, req.url);
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
-//     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
-//    });
+const fs = require('fs');
 
 var gameState = {
     numberOfPlayers: 0,
@@ -32,6 +27,12 @@ outOfGameActions = [addPlayer, newGame, removePlayer];
 
 var tilesS = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖🀗🀘🀙🀚🀛🀜🀝🀞🀟🀠🀡🀀🀁🀂🀃🀄🀅🀆'
 var tiles = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖🀗🀘🀙🀚🀛🀜🀝🀞🀟🀠🀡🀀🀁🀂🀃🀄🀅🀆'.split('');
+
+try {
+    gameState = JSON.parse(fs.readFileSync('gameState'));
+} catch (e) {}
+
+
 // console.log(tiles)
 // console.log(tilesS)
 
@@ -50,10 +51,11 @@ var tiles = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖�
 // };
 
 app.get('/api/status/:id', (req, res) => {
-    handleApi(req, res, showStatus);
+    handleApi(req, res, getStatus);
 })
 
-function showStatus(req) {
+function getStatus(req) {
+    console.log(req.params);
     const playerNum = getPlayerID(req);
     const status = {
         playerNum,
@@ -72,8 +74,19 @@ function showStatus(req) {
     return status;
 }
 
+function saveStatus() {
+    fs.writeFile('gameState', JSON.stringify(gameState, null, 2), function (err) {
+        if (err) return console.log(err);
+    });
+}
+
+function showStatus(req) {
+    saveStatus();
+    return getStatus(req);
+}
+
 function handleApi(req, res, action) {
-    if (action != showStatus) {
+    if (action != getStatus) {
         if (!outOfGameActions.includes(action) && !gameState.inGame) {
             return res.status(400).send('Not in game.');
         } else if (outOfGameActions.includes(action) && gameState.inGame) {
@@ -399,6 +412,7 @@ function addPlayer(req) {
     gameState.playerIDs.push(id);
     const playerNum = gameState.numberOfPlayers;
     gameState.numberOfPlayers++;
+    saveStatus();
     return {
         playerNum,
         playerID: id,
