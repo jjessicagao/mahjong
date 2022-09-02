@@ -13,6 +13,7 @@ var gameState = {
     allTiles: [], 
     unpickedUp: 0,
     lastDropped: 0,
+    lastPickedUp: 0,
     unwantedTiles: [0],
     inHandTiles: [[0]],
     laidOutTiles: [[0]],
@@ -51,6 +52,7 @@ try {
 // };
 
 app.get('/api/status/:id', (req, res) => {
+    console.log(req.params);
     handleApi(req, res, getStatus);
 })
 
@@ -63,6 +65,7 @@ function getStatus(req) {
         laidOut: gameState.laidOutTiles,
         players: gameState.players,
         lastDropped: gameState.lastDropped,
+        lastPickedUp: gameState.lastPickedUp,
         unwantedTiles: gameState.unwantedTiles,
         playerTurn: gameState.playerTurn,
         playerPickUp: gameState.playerPickUp,
@@ -141,8 +144,7 @@ function newGame(req) {
         gameState.laidOutTiles.push([]);
     }
     gameState.unwantedTiles = [];
-    dealer = Math.floor(Math.random() * gameState.numberOfPlayers)
-    playerTurn = dealer;
+    gameState.playerTurn = gameState.dealer;
     gameState.playerPickUp = false;
     gameState.inGame = true;
     gameState.winner = -1;
@@ -185,16 +187,18 @@ function shuffleTiles(Unshuffled) {
 function distributeTiles() {
     let n = 14;
     gameState.inHandTiles = new Array(gameState.numberOfPlayers);
-    gameState.inHandTiles[0] = gameState.allTiles.slice(0,n)
-    gameState.inHandTiles[0].sort(function(a,b) {
+    gameState.inHandTiles[gameState.dealer] = gameState.allTiles.slice(0,n)
+    gameState.inHandTiles[gameState.dealer].sort(function(a,b) {
         return a - b
     });
-    for (let i = 1 ; i < gameState.numberOfPlayers ; i++) {
-        gameState.inHandTiles[i] = gameState.allTiles.slice(n,n+13);
-        gameState.inHandTiles[i].sort(function(a,b) {
-            return a - b
-        });
-        n += 13;
+    for (let i = 0 ; i < gameState.numberOfPlayers ; i++) {
+        if (i != gameState.dealer) {
+            gameState.inHandTiles[i] = gameState.allTiles.slice(n,n+13);
+            gameState.inHandTiles[i].sort(function(a,b) {
+                return a - b
+            });
+            n += 13;
+        }    
     }
     gameState.unpickedUp = n;
 }
@@ -226,16 +230,23 @@ function findTile(playerNum, tile) {
 app.put('/api/pickUpNewTile/:id', (req, res) => {
     handleApi(req, res, pickUpNewTile);
 })
-function pickUpNewTile (req) {
+function pickUpNewTile (req, gang) {
     const playerNum = getPlayerID(req);
+    if (gameState.unpickedUp >= 136) {
+        throw "No more tiles left!"
+    }
     if (playerNum != gameState.playerTurn || !gameState.playerPickUp) {
         throw "It's not your turn to pick up a tile.";
-    } 
-    gameState.unwantedTiles.push(gameState.lastDropped);
-    gameState.inHandTiles[playerNum].push(gameState.allTiles[gameState.unpickedUp]);
+    }
+    if (!gang) {
+        gameState.unwantedTiles.push(gameState.lastDropped);
+    }
+    const tile = gameState.allTiles[gameState.unpickedUp];
+    gameState.inHandTiles[playerNum].push(tile);
     gameState.inHandTiles[playerNum].sort(function(a,b) {
         return a - b
     });
+    gameState.lastPickedUp = gameState.inHandTiles[playerNum].indexOf(tile);
     gameState.unpickedUp++;
     gameState.playerPickUp = false;
     return showStatus(req);
@@ -275,22 +286,23 @@ app.put('/api/gang/:id', (req, res) => {
 
 function gang(req) { 
     const playerNum = getPlayerID(req);
+    let tile = -1;
     if (gameState.playerTurn == playerNum && !gameState.playerPickUp) {
-        const tile = req.query.tile;
-        if (gameState.inHandTiles[playerNum].includes(tile)) {
+        tile = req.query.tile;
+        if (!gameState.laidOutTiles[playerNum].includes(tile)) {
             const count = countCard(tile, gameState.inHandTiles[playerNum]);
-            if (count < 4) throw 'You do not have enough of this tile to gang.';
+            if (count < 4) throw count + 'You do not have enough of this tile to gang.';
             gameState.laidOutTiles[playerNum].push(tile, tile, tile, tile);
         } else {
             const count = countCard(tile, gameState.laidOutTiles[playerNum]);
-            if (count < 3) throw 'You do not have enough of this tile to gang.';
+            if (count < 3) throw count + 'You do not have enough of this tile to gang.';
             gameState.laidOutTiles[playerNum].push(tile);
         }
     } else {
         if (playerNum == previousPlayer() || !gameState.playerPickUp) throw 'You cannot gang.';
-        const tile = gameState.lastDropped;
+        tile = gameState.lastDropped;
         const count = countCard(tile, gameState.inHandTiles[playerNum]);
-        if (count < 3) throw 'You do not have enough of this tile to gang.';
+        if (count < 3) throw count + 'You do not have enough of this tile to gang.';
         gameState.laidOutTiles[playerNum].push(tile, tile, tile, tile);
         gameState.playerTurn = playerNum;
     }
@@ -300,7 +312,7 @@ function gang(req) {
         }
     }
     gameState.playerPickUp = true;
-    return pickUpNewTile(req);
+    return pickUpNewTile(req, true);
 }
 
 app.put('/api/chi/:id', (req, res) => {
@@ -368,7 +380,12 @@ function win(req) {
     } else if (playerNum == previousPlayer() || !gameState.playerPickUp) {
         throw 'You cannot win.';
     } else {
-        winning += (gameState.laidOutTiles[playerNum].length + gameState.inHandTiles[playerNum].length - 13);
+        gameState.inHandTiles[playerNum].push(gameState.lastDropped);
+        gameState.inHandTiles[playerNum].sort(function(a,b) {
+            return a - b
+        });
+        gameState.lastPickedUp = gameState.inHandTiles[playerNum].indexOf(gameState.lastDropped);
+        winning += (gameState.laidOutTiles[playerNum].length + gameState.inHandTiles[playerNum].length - 14);
     }
     if (gameState.laidOutTiles[playerNum].length == 0) {
         winning *= 2;
@@ -388,7 +405,11 @@ function win(req) {
         }
     }
     if (playerNum != gameState.dealer) {
-        gameState.dealer++;
+        if (gameState.dealer == gameState.numberOfPlayers - 1) {
+            gameState.dealer = 0;
+        } else {
+            gameState.dealer++;
+        }
     }
     gameState.inGame = false;
     gameState.winner = playerNum;
@@ -402,6 +423,9 @@ function addPlayer(req) {
     const playerName = req.params.name.trim();
     if (gameState.players.some(p => p.name.toLowerCase() == playerName.toLowerCase())) {
         throw 'Name already taken.'
+    }
+    if (playerName == '') {
+        throw 'Must enter a valid name.'
     }
     const player = {
         name: playerName,
@@ -420,6 +444,7 @@ function addPlayer(req) {
         laidOut: gameState.laidOutTiles,
         players: gameState.players,
         lastDropped: gameState.lastDropped,
+        lastPickedUp: gameState.lastPickedUp,
         unwantedTiles: gameState.unwantedTiles,
         playerTurn: gameState.playerTurn,
         playerPickUp: gameState.playerPickUp,

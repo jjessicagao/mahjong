@@ -15,8 +15,12 @@
     Unwanted: {{numToTiles(status.unwantedTiles)}} <br>
     <div>
       Last dropped: {{status.playerPickUp ? numToTiles([status.lastDropped]) : ''}} 
-    </div>
-    In hand: {{numToTiles(status.inHand)}} <br>
+    </div> <br>
+    In hand: 
+    <span *ngFor="let tile of status.inHand; let i = index"
+    (click)="selectTile(i)"
+    [class.selected]="selectedTiles.includes(i)"
+    [class.last]="i == status.lastPickedUp && !status.playerPickUp"> {{numToTiles([tile])}}</span> <br>
     Laid out: {{numToTiles(status.laidOut[status.playerNum])}} <br>
   </div>
   <div *ngIf = "status.winner >= 0" style="font-size: 3em">
@@ -37,13 +41,13 @@
   <div *ngIf = "joined == 1">
     <button *ngIf = "!status.inGame" (click)="newGame()"> New Game </button>
     <div *ngIf = "status.inGame"> 
-      <input name="index" placeholder="tile index" #index>
-      <input name="index2" placeholder="tile index 2" #index2>
-      <button (click)="dropTile(index.value)"> Drop Tile </button>
+      <!-- <input name="index" placeholder="tile index" #index>
+      <input name="index2" placeholder="tile index 2" #index2> -->
+      <button (click)="dropTile()"> Drop Tile </button>
       <button (click)="pickUpNewTile()"> Pick Up Tile </button> 
-      <button (click)="chi(index.value, index2.value)"> Chi </button>
+      <button (click)="chi()"> Chi </button>
       <button (click)="peng()"> Peng </button>
-      <button (click)="gang(index.value)"> Gang </button>
+      <button (click)="gang()"> Gang </button>
       <button (click)="win()"> Win </button>
     </div>
   </div>

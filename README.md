@@ -4,9 +4,13 @@
 
 ## TO DO:
 - ~~server save, load state~~
-- UI
-- mark last picked up
-- clickable tiles
+- ~~win by last dropped~~
+- ~~replace sudoku with mahjong~~
+- ~~clickable tiles~~
+- ~~run out of tiles~~
+- mark last picked up + win
+- ~~check trimmed name (empty name)~~
+- show dialog for errors
 - pending cmd for 10 sec
-- win with chi
-- replace sudoku with mahjong
+- check win
+- UI
