@@ -27,6 +27,9 @@ export class AppComponent {
   tiles = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖🀗🀘🀙🀚🀛🀜🀝🀞🀟🀠🀡🀀🀁🀂🀃🀄🀅🀆'.split('');
   joined = -1;
   selectedTiles: number[] = [];
+  
+  errorMsg = '';
+  showError = false;
 
   title = 'mahjong';
 
@@ -79,7 +82,11 @@ export class AppComponent {
       this.mahjong.dropTile(tile).subscribe((data:any) => {
         this.status = data;
         this.selectedTiles = [];
-      })
+      },
+      (error: any) => {
+        this.errorMsg = error;
+        this.showError = true;
+      });
     }
   }
 
@@ -87,18 +94,32 @@ export class AppComponent {
     this.mahjong.pickUpNewTile().subscribe((data:any) => {
       this.status = data;
       this.selectedTiles = [];
-    })
+    },
+    (error: any) => {
+      this.errorMsg = error;
+      this.showError = true;
+    });
   }
 
   newGame() {
-    this.mahjong.newGame().subscribe((data:any) => this.status = data);
+    this.mahjong.newGame().subscribe((data:any) => {
+      this.status = data
+    },
+    (error: any) => {
+      this.errorMsg = error;
+      this.showError = true;
+    });
   }
 
   peng() {
     this.mahjong.peng().subscribe((data:any) => {
       this.status = data;
       this.selectedTiles = [];
-    })
+    },
+    (error: any) => {
+      this.errorMsg = error;
+      this.showError = true;
+    });
   }
 
   gang() {
@@ -108,7 +129,11 @@ export class AppComponent {
       this.mahjong.gang(tile).subscribe((data:any) => {
         this.status = data;
         this.selectedTiles = [];
-      })
+      },
+      (error: any) => {
+        this.errorMsg = error;
+        this.showError = true;
+      });
     }
   }
 
@@ -119,7 +144,11 @@ export class AppComponent {
       this.mahjong.chi(tile1, tile2).subscribe((data:any) => {
         this.status = data;
         this.selectedTiles = [];
-      })
+      },
+      (error: any) => {
+        this.errorMsg = error;
+        this.showError = true;
+      });
     }
   }
 
@@ -128,5 +157,9 @@ export class AppComponent {
       this.status = data;
       this.selectedTiles = [];
     })
+  }
+
+  closePopup() {
+    this.showError = false;
   }
 }

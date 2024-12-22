@@ -53,6 +53,13 @@
   </div>
 </div>
 
+<div *ngIf = "showError == true" [class.error]>
+    <h2>Error</h2>
+    <p>{{errorMsg}}</p>
+    <button (click)="closePopup()">OK</button>
+</div>
+
+
 <!-- <table>
   <tr *ngFor='let row of current; let i = index'>
     <td *ngFor='let cell of row; let j = index' 

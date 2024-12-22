@@ -26,7 +26,6 @@ var gameState = {
 
 outOfGameActions = [addPlayer, newGame, removePlayer];
 
-var tilesS = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖🀗🀘🀙🀚🀛🀜🀝🀞🀟🀠🀡🀀🀁🀂🀃🀄🀅🀆'
 var tiles = '🀇🀈🀉🀊🀋🀌🀍🀎🀏🀐🀑🀒🀓🀔🀕🀖🀗🀘🀙🀚🀛🀜🀝🀞🀟🀠🀡🀀🀁🀂🀃🀄🀅🀆'.split('');
 
 try {
@@ -34,8 +33,6 @@ try {
 } catch (e) {}
 
 
-// console.log(tiles)
-// console.log(tilesS)
 
 // var actions = {
 //     showStatus: showStatus,
